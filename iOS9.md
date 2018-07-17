@@ -42,20 +42,16 @@ sdk技术问题沟通QQ群：609994083</br>
 
 **[1] 初始化SDK**
 
-在appDelegate.m文件的`didFinish`函数中添加初始化代码。初始化代码只需要执行一次就可以。
+在需要进行登录操作的vc进行以下的初始化调用。
 
 ```objective-c
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-
-     [TYRZSDK registerAppId:APPID appKey:APPKEY];
-    return YES;
-}
+[TYRZSDK.shareLogin registerAppId:APPID AppKey:APPKEY];
 ```
 
 **方法原型：**
 
 ```objective-c
-+ (void)registerAppId:(NSString *)appId appKey:(NSString *)appKey;
+- (void)registerAppId:(NSString *)appId AppKey:(NSString *)appKey;
 ```
 
 **参数说明：**
@@ -103,7 +99,7 @@ sdk技术问题沟通QQ群：609994083</br>
 **请求示例代码**
 
 ```objective-c
-[TYRZSDK getPhoneNumberWithTimeout: 8000 
+[TYRZSDK.shareLogin getPhoneNumberWithTimeout: 8000 
  						completion: ^ (NSDictionary * _Nonnull sender) {
         if ([sender[@ "resultCode"] isEqualToString: @"103000"]) {
             NSLog(@ "取号成功:%@", sender);
@@ -116,7 +112,7 @@ sdk技术问题沟通QQ群：609994083</br>
 **取号方法原型：**
 
 ```objective-c
-+ (void)getPhoneNumberWithTimeout:(NSTimeInterval)duration 
+- (void)getPhoneNumberWithTimeout:(NSTimeInterval)duration 
     				   completion:(void (^)(NSDictionary * sender))completion;
 ```
 
@@ -133,7 +129,7 @@ sdk技术问题沟通QQ群：609994083</br>
 | ------------- | -------- | ----------------------------- |
 | resultCode    | NSString | 返回相应的结果码              |
 | desc          | NSString | 调用描述                      |
-| securityphone | NSString | 手机号码掩码，如“138XXXX0000” |
+| securityPhone | NSString | 手机号码掩码，如“138XXXX0000” |
 
 ## 2.4. 创建授权页
 
@@ -201,34 +197,34 @@ CustomAuthViewController *authVC = [[CustomAuthViewController alloc]init];
 
 **请求示例代码：**
 
-```java
+```objective-c
 //1.构建授权页控制器
 
 //2.调用取号方法（根据实际需求，也可以放在构建授权页控制前调用）
 -(void)getPhonenumber{
-    __weak typeof(self) weakSelf = self;
-    [TYRZSDK getPhoneumberWithTimeout:8000 completion:^(NSDictionary * _Nonnull sender){
+    
+    [TYRZSDK.shareLogin getPhoneumberWithTimeout:8000 completion:^(NSDictionary * _Nonnull sender){
         if ([sender[@"resultCode"] isEqualToString:@"103000"]) {
             NSLog(@"取号成功:%@",sender);
             // 显示手机号码掩码
-            weakSelf.securityPhoneLable.text = sender[@"securityphone"];
+            self.securityPhoneLable.text = sender[@"securityPhone"];
         } else {
             NSLog(@"取号失败:%@",sender);
-            [weakSelf dismissViewControllerAnimated:YES completion:nil];
+            [self dismissViewControllerAnimated:YES completion:nil];
         }
     }];
 }
 
 //3.授权登录按钮点击事件，调用授权方法
 -(void)authorizeLoginButtonClick{
-    __weak typeof(self) weakSelf = self;
-    [TYRZSDK getAuthorizationWithAuthViewController:weakSelf.authVC completion:^(NSDictionary * _Nonnull sender) {
+    
+    [TYRZSDK.shareLogin getAuthorizationWithAuthViewController:weakSelf.authVC completion:^(NSDictionary * _Nonnull sender) {
         if ([sender[@"resultCode"] isEqualToString:@"103000"]) {
             NSLog(@"授权登录成功:%@",sender);
         } else {
             NSLog(@"授权登录失败:%@",sender);
         }
-        [weakSelf dismissViewControllerAnimated:YES completion:nil];
+        [self dismissViewControllerAnimated:YES completion:nil];
     }];
 }
 
@@ -237,8 +233,8 @@ CustomAuthViewController *authVC = [[CustomAuthViewController alloc]init];
 
 **授权方法原型：**
 
-```java
-+ (void)getAuthorizationWithAuthViewController:(UAAuthViewController *_Nullable)authVC completion:(void (^)(NSDictionary *sender))completion;
+```objective-c
+- (void)getAuthorizationWithAuthViewController:(UAAuthViewController *_Nullable)authVC completion:(void (^)(NSDictionary *sender))completion;
 ```
 
 **参数说明：**
@@ -932,31 +928,28 @@ CustomAuthViewController *authVC = [[CustomAuthViewController alloc]init];
 
 | 错误编号      | 返回码描述                                         |
 | ------------- | -------------------------------------------------- |
-| 103000        | 成功                                               |
-| 200009        | Bundle ID与服务器填写的不一致                      |
-| 200010        | 当前网络环境下不支持的认证方式                     |
-| 200011        | 应用未允许HTTP请求                                 |
-| 200020        | 用户取消授权                                       |
+| 103000        | 成功                                               |                                                       
 | 200021        | 数据解析异常                                       |
 | 200022        | 无网络                                             |
 | 200023        | 请求超时                                           |
-| 200025        | 未知错误一般出现在线程捕获异常，请配合异常打印分析 |
-| 200026        | 输入参数错误                                       |
-| 200027        | 未开启数据网络                                     |
+| 200027        | 未开启数据网络或蜂窝不稳定                                     |
 | 200028        | 网络请求出错                                       |
-| 200029        | 请求返回的数据不完整                               |
-| 200030        | 没有进行初始化APPId、APPKey参数                    |
-| 200037        | 获取不到openid                                     |
-| 200038        | 电信重定向失败                                     |
-| 200039        | 电信取号接口返回失败                               |
-| 200040        | UI资源加载异常                                     |
-| 200041        | 应用未授权（未勾选能力）                           |
-| 200042        | 授权页弹出异常                                     |
-| 200047        | 网络异常                                           |
-| 200048        | 用户未安装sim卡                                    |
-| 200051~200059 | socket相关错误                                     |
-| 200060~200068 | 电信取号相关错误                                   |
-| 105302        | AppId不在白名单                                    |
+| 200030        | 没有进行初始化APPId、APPKey参数                    |                                     
+| 200038        | 非移动网关重定向失败                                     |                                                                    
+| 200042        | 授权页的类型错误                                |                                     
+| 200047        | 网络异常                                     |
+| 200048        | 用户未安装sim卡                                 |
+| 200049        | 授权登录失败                                           |
+| 200050        | Socket数据流字节为0，请求无响应消息                             |
+| 200051        | Socket读取蜂窝端口失败                                     |
+| 200052        | Socket设置蜂窝端口失败                        |
+| 200053        | Socket基于蜂窝发起的连接失败                     |
+| 200054        | RunLoop对Socket事件处理已超时                  |
+| 200055        | Socket在RunLoop触发连接失败                     |
+| 200056        | Socket发送请求超时                              |
+| 200057        | Socket发送请求出错                            | 
+| 200058        | Socket读取数据流出错，具体原因请查看返回描述               |                                  
+| 200064        | SDK无法提供描述的未知错误                                    |
 
 </br>
 
@@ -1036,3 +1029,4 @@ CustomAuthViewController *authVC = [[CustomAuthViewController alloc]init];
 | 606    | 验证Token失败              |
 | 999    | 系统异常                   |
 | 102315 | 次数已用完                 |
+
